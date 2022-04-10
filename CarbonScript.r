@@ -17,28 +17,28 @@ getwd()
 dataC  <- read.csv2('F14C_posteriornew.csv', dec=".", sep = ";")
 dataIg <- read.csv('CO2_Ignacio.csv')
 co2 <- read.table("co2_annmean_mlo.txt")
-names(co2) <- c('Año.cofechado', 'co2', 'V3')
+names(co2) <- c('Year.crossdating', 'co2', 'V3')
 cod  <- read.csv('Codigos_posterior.csv')
 treeR <- read.tucson('treerings_posterior.rwl')
 NH3 <- read.csv2('NHZ3_mean.csv', dec=",", sep = ";")
 coor <- read.csv('sp_coord.csv')
 
 
-dataC[,'Año.cofechado'] <- round(dataC[,'Año.cofechado'],0)
-splitC <- split(dataC, dataC$'Arbol')
+dataC[,'Year.crossdating'] <- round(dataC[,'Year.crossdating'],0)
+splitC <- split(dataC, dataC$'Tree')
 subC <- lapply(splitC, function(x)
-               x[,c('Año.cofechado','delta14C')])
+               x[,c('Year.crossdating','delta14C')])
 fmatch <- function(tomatch.){
     suppressWarnings(Reduce(function(x,y){
-        merge(x,y, by = 'Año.cofechado', all = TRUE)},tomatch.))}
+        merge(x,y, by = 'Year.crossdating', all = TRUE)},tomatch.))}
 merC <- fmatch(subC)
-merC <- merC[order(merC$'Año.cofechado'),]
-merC <- merC[!is.na(merC$'Año.cofechado'),]
-names(merC) <- c('Año.cofechado', names(subC))
-treeR$'Año.cofechado' <- rownames(treeR)
-treeC <- merge(treeR, merC, by = 'Año.cofechado',all.x = TRUE)
-rownames(treeC) <- treeC$'Año.cofechado'
-treeCC <- merge(treeC, co2[,1:2], by = 'Año.cofechado')
+merC <- merC[order(merC$'Year.crossdating'),]
+merC <- merC[!is.na(merC$'Year.crossdating'),]
+names(merC) <- c('Year.crossdating', names(subC))
+treeR$'Year.crossdating' <- rownames(treeR)
+treeC <- merge(treeR, merC, by = 'Year.crossdating',all.x = TRUE)
+rownames(treeC) <- treeC$'Year.crossdating'
+treeCC <- merge(treeC, co2[,1:2], by = 'Year.crossdating')
 
 # Radiocarbon from the Northern Hemisphere Zone 3 curve 
 str(NH3)
@@ -49,10 +49,10 @@ zona3mean <-NH3%>%group_by(Year.AD)%>%summarize(mean.Delta14C = mean(mean.Delta1
 
 
 # Plot of radiocarbon concentration in the background air and in the measured tree rings expressed as delta14C (‰) over time (Figure 1)
-splitC1 <- split(dataC, dataC$'Año.cofechado')
+splitC1 <- split(dataC, dataC$'Year.crossdating')
 names(dataC)
 subC1 <- lapply(splitC1, function(x)
-  x[,c('Año.cofechado','delta14C','err...')])
+  x[,c('Year.crossdating','delta14C','err')])
 dt <- do.call(rbind.data.frame, subC1)
 names(dt)
 names(dt) <- c(names(zona3mean)[1L], names(dt)[-1L])
@@ -79,7 +79,7 @@ getwd()
 # Calculation of the CO2 concentration of fossil fuel origin [CO2F]
 names(zona3mean) <- c('year','14C','sd.14C')
 treeCCNH3 <- merge(treeCC, zona3mean,
-                     by.x = 'Año.cofechado', by.y = 'year',
+                     by.x = 'Year.crossdating', by.y = 'year',
                      all.x = TRUE)
 
 cFoss <- function(CO2,CBG,D14C){
@@ -109,11 +109,11 @@ getwd()
 
 
 # Comparison with emission data
-meanCO2M <- data.frame(tiempo = CO2M[,1L], CO2F= apply(CO2M[,-c(1,12)], 1, mean, na.rm = TRUE))
+meanCO2M <- data.frame(time = CO2M[,1L], CO2F= apply(CO2M[,-c(1,12)], 1, mean, na.rm = TRUE))
 CO2_MedTg <- dataIg$CO2_Med/1e6 
 dataIg1<-cbind(dataIg,CO2_MedTg)
-merigco <- merge(dataIg1, meanCO2M, by = 'tiempo')
-mer2000 <- subset(merigco, tiempo >= 2000)
+merigco <- merge(dataIg1, meanCO2M, by = 'time')
+mer2000 <- subset(merigco, time >= 2000)
 
 model <- lm(CO2F~CO2_MedTg, data = mer2000)
 Pvalue = pf(summary(model)$fstatistic[1],
@@ -129,8 +129,8 @@ data.tb <- tibble(x = 2, y = 12, tb = list(tb.pm))
 
 
 # Plot of comparison between average values of the concentrations of fossil fuel calculated in this study and official CO2 emission data 
-ggplot(mer2000, aes(CO2_MedTg, CO2F, label=tiempo)) + geom_point()+  
-  geom_text_repel(aes(label=tiempo), 
+ggplot(mer2000, aes(CO2_MedTg, CO2F, label=time)) + geom_point()+  
+  geom_text_repel(aes(label=time), 
                   size=3)+
   geom_abline(intercept = model$coefficients[1], slope = model$coefficients[2], lty = 2, color = "darkgrey")+ 
   geom_table(data = data.tb, aes(x, y, label = tb)) +
@@ -157,9 +157,9 @@ crd <- '+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0'
 
 spdf <- SpatialPointsDataFrame(coords = coor[,5:4], data = coor,
                                proj4string = crs(crd))
-gd1 <- as_tibble(spdf)%>%select(Longitud, Codigo)%>%
-    mutate(sample = gsub("[a-zA-Z ]", "",Codigo))%>%
-    mutate(zone = cut(Longitud, 3))%>%select(sample, zone)%>%
+gd1 <- as_tibble(spdf)%>%select(Longitude, Code)%>%
+    mutate(sample = gsub("[a-zA-Z ]", "",Code))%>%
+    mutate(zone = cut(Longitude, 3))%>%select(sample, zone)%>%
     left_join(gd)%>%drop_na()%>%as.data.frame()
 gd <- groupedData(value ~ poly(time,2)|sample, data = gd1)
 
@@ -215,8 +215,8 @@ yrini.[,'sample'] <- paste0('FU',yrini.[,'sample'])
 yrini <- yrini.[,!names(yrini.)%in%c('predict.fixed')]
 head(yrini)
 spdf. <- as.data.frame(spdf)
-mergedf. <- merge(yrini, spdf.[,!names(spdf.)%in%c('CAP','Fecha')], by.y = 'Codigo', by.x = 'sample')
-mergedf <- mergedf.[,!names(mergedf.)%in%c('Longitud.1','Latitud.1')] 
+mergedf. <- merge(yrini, spdf.[,!names(spdf.)%in%c('CAP','Date')], by.y = 'Code', by.x = 'sample')
+mergedf <- mergedf.[,!names(mergedf.)%in%c('Longitude.1','Latitude.1')] 
 mrd <- subset(mergedf, !is.na(mergedf$'predict.sample'))
 
 
@@ -226,10 +226,10 @@ yrints <- function(x, seed = 123){
 yrini<- subset(preds, time == as.factor(as.character(x)))
 yrini[,'sample'] <- paste0('FU',yrini[,'sample'])
 yrini <- yrini[,-c(1,3)]
-mergedf <- merge(spdf, yrini, by.x = 'Codigo', by.y = 'sample')
+mergedf <- merge(spdf, yrini, by.x = 'Code', by.y = 'sample')
 mrd <- subset(mergedf, !is.na(mergedf$'predict.sample'))
 newarea <- c(-75.61, -75.554, 6.18, 6.29)
-newmrd <- mrd[!mrd$'Codigo'%in%c('FU37'),] 
+newmrd <- mrd[!mrd$'Code'%in%c('FU37'),] 
 newr <- crop(elmed1, extent(newarea))
 rmed <- crop(roadMed, extent(newarea))
 grd <- as.data.frame(rasterToPoints(newr, spatial =T))[,-1L]
@@ -254,11 +254,11 @@ inters5 <- inters[[seq..]]
 coor. <- coor[-c(33:37),]
 coor.. <- coor.[,4:5]
 cr <- data.frame(coordinates(coor..))
-coordinates(cr) <- ~Longitud+Latitud
+coordinates(cr) <- ~Longitude+Latitude
 extent(cr)
 
 # Plot of Spatial interpolation of fossil fuel concentrations [CO2F] 
-p1 <- plotebv(inters5) 
+p1 <- plot.echanges(inters5) 
 p1 + latticeExtra::layer(sp.points(cr, pch = 19, col = 'red', cex = 0.4))
 
 dev.copy(pdf, 'Figure5.pdf')
