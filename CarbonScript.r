@@ -260,7 +260,7 @@ extent(cr)
 
 
 # Plot of Spatial interpolation of fossil fuel concentrations [CO2F]
-p1 <- plotebv(inters5) 
+p1 <- plot.echanges(inters5) 
 ## p1 + latticeExtra::layer(sp.points(cr, pch = 19, col = 'red', cex = 0.4), columns = 1, rows = 1)
 p1 + latticeExtra::layer(sp.points(cr, pch = 19, col = 'red', cex = 0.4))
 
@@ -271,12 +271,12 @@ getwd()
 # Plot of Uncertainty map of spatial interpolations of fossil fuel concentrations [CO2F] 
 inters2sd <- inters
 sdfrom <- calc(inters2sd, fun = sd)
-p1 <- plotebv(sdfrom, col.regions = rev(viridis_pal(option = 'C')(255))) 
+p1 <- plot.echanges(sdfrom, col.regions = rev(viridis_pal(option = 'C')(255))) 
 p2 <- p1 + latticeExtra::layer(sp.points(cr, pch = 19, col = 'white', cex = 0.4), columns = 1, rows = 1)
 p2
 
 
-dev.copy(pdf, 'Figure.pdf')
+dev.copy(pdf, 'Figure6.pdf')
 dev.off()
 getwd()
 
